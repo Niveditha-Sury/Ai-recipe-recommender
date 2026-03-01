@@ -9,11 +9,11 @@ exports.getRecommendation = async (req, res) => {
     try {
         const { cuisine, cookingTime, dietaryType, spiceLevel } = req.body;
 
-        // 1. Fetch the user's saved data from MongoDB
+        // Fetch the user's saved data from MongoDB
         const user = await User.findById(req.user.userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        // 2. Use saved pantry and allergies if manual ones aren't provided
+        // Use saved pantry and allergies 
         const finalIngredients = user.pantry && user.pantry.length > 0 ? user.pantry : [];
         const finalAllergies = user.allergies && user.allergies.length > 0 ? user.allergies : [];
 
