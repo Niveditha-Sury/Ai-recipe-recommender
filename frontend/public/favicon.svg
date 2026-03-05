@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="32" fill="#254f22"/>
+
+  <!-- Fork (left) -->
+  <!-- Fork handle -->
+  <rect x="22" y="32" width="3" height="18" rx="1.5" fill="#ede4c2"/>
+  <!-- Fork tines -->
+  <rect x="20" y="14" width="1.5" height="11" rx="0.75" fill="#ede4c2"/>
+  <rect x="23" y="14" width="1.5" height="11" rx="0.75" fill="#ede4c2"/>
+  <rect x="26" y="14" width="1.5" height="11" rx="0.75" fill="#ede4c2"/>
+  <!-- Fork bridge connecting tines to handle -->
+  <path d="M20.5 25 Q23.5 29 27.5 25" stroke="#ede4c2" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Knife (right) -->
+  <!-- Knife handle -->
+  <rect x="39" y="32" width="3" height="18" rx="1.5" fill="#ede4c2"/>
+  <!-- Knife blade -->
+  <path d="M39 14 L42 14 Q44 20 42 31 L39 31 Z" fill="#ede4c2"/>
+</svg>
