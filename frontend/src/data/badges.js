@@ -1,0 +1,227 @@
+// Represents the thresholds and metadata for all available badges in the app.
+export const BADGES = [
+    // XP Based Badges (Skill milestones)
+    {
+        id: "xp_1",
+        title: "Kitchen Novice",
+        description: "Earn 100 XP to begin your culinary journey.",
+        type: "xp",
+        threshold: 100,
+        emoji: "🥚",
+        color: "#F5824A",
+        bg: "bg-orange-100",
+    },
+    {
+        id: "xp_2",
+        title: "Apprentice Prep",
+        description: "Reach 500 XP.",
+        type: "xp",
+        threshold: 500,
+        emoji: "🔪",
+        color: "#A03A13",
+        bg: "bg-red-100",
+    },
+    {
+        id: "xp_3",
+        title: "Taste Tester",
+        description: "Reach 1,000 XP.",
+        type: "xp",
+        threshold: 1000,
+        emoji: "🥄",
+        color: "#254F22",
+        bg: "bg-green-100",
+    },
+    {
+        id: "xp_4",
+        title: "Sauce Boss",
+        description: "Reach 2,500 XP.",
+        type: "xp",
+        threshold: 2500,
+        emoji: "🥫",
+        color: "#d946ef",
+        bg: "bg-fuchsia-100",
+    },
+    {
+        id: "xp_5",
+        title: "Flavor Chemist",
+        description: "Reach 5,000 XP.",
+        type: "xp",
+        threshold: 5000,
+        emoji: "🧪",
+        color: "#0ea5e9",
+        bg: "bg-sky-100",
+    },
+    {
+        id: "xp_6",
+        title: "Sous Chef",
+        description: "Reach 10,000 XP.",
+        type: "xp",
+        threshold: 10000,
+        emoji: "👨‍🍳",
+        color: "#8b5cf6",
+        bg: "bg-violet-100",
+    },
+    {
+        id: "xp_7",
+        title: "Grill Master",
+        description: "Reach 15,000 XP.",
+        type: "xp",
+        threshold: 15000,
+        emoji: "🔥",
+        color: "#ea580c",
+        bg: "bg-orange-100",
+    },
+    {
+        id: "xp_8",
+        title: "Executive Chef",
+        description: "Reach 25,000 XP.",
+        type: "xp",
+        threshold: 25000,
+        emoji: "👑",
+        color: "#eab308",
+        bg: "bg-yellow-100",
+    },
+    {
+        id: "xp_9",
+        title: "Michelin Star",
+        description: "Reach 50,000 XP.",
+        type: "xp",
+        threshold: 50000,
+        emoji: "⭐",
+        color: "#fbbf24",
+        bg: "bg-amber-100",
+    },
+    {
+        id: "xp_10",
+        title: "Appitat Legend",
+        description: "Reach 100,000 XP. The ultimate mastery.",
+        type: "xp",
+        threshold: 100000,
+        emoji: "🏆",
+        color: "#14b8a6",
+        bg: "bg-teal-100",
+    },
+
+    // Days Cooked Badges (Consistency milestones)
+    {
+        id: "days_1",
+        title: "First Flame",
+        description: "Cook your first meal!",
+        type: "days",
+        threshold: 1,
+        emoji: "🎇",
+        color: "#ef4444",
+        bg: "bg-red-100",
+    },
+    {
+        id: "days_2",
+        title: "Weekend Warrior",
+        description: "Cook for 3 total days.",
+        type: "days",
+        threshold: 3,
+        emoji: "🥓",
+        color: "#f97316",
+        bg: "bg-orange-100",
+    },
+    {
+        id: "days_3",
+        title: "One Week Wonders",
+        description: "Cook for 7 total days.",
+        type: "days",
+        threshold: 7,
+        emoji: "📅",
+        color: "#3b82f6",
+        bg: "bg-blue-100",
+    },
+    {
+        id: "days_4",
+        title: "Baker's Dozen",
+        description: "Cook for 13 total days.",
+        type: "days",
+        threshold: 13,
+        emoji: "🥐",
+        color: "#c2410c",
+        bg: "bg-orange-100",
+    },
+    {
+        id: "days_5",
+        title: "Habit Builder",
+        description: "Cook for 21 total days.",
+        type: "days",
+        threshold: 21,
+        emoji: "🧱",
+        color: "#64748b",
+        bg: "bg-slate-100",
+    },
+    {
+        id: "days_6",
+        title: "Monthly Menu",
+        description: "Cook for 30 total days.",
+        type: "days",
+        threshold: 30,
+        emoji: "📋",
+        color: "#1d4ed8",
+        bg: "bg-blue-100",
+    },
+    {
+        id: "days_7",
+        title: "Quarter Century",
+        description: "Cook for 50 total days.",
+        type: "days",
+        threshold: 50,
+        emoji: "🪙",
+        color: "#b45309",
+        bg: "bg-amber-100",
+    },
+    {
+        id: "days_8",
+        title: "Centurion Chef",
+        description: "Cook for 100 total days.",
+        type: "days",
+        threshold: 100,
+        emoji: "💯",
+        color: "#be123c",
+        bg: "bg-rose-100",
+    },
+    {
+        id: "days_9",
+        title: "Half a Year",
+        description: "Cook for 180 total days.",
+        type: "days",
+        threshold: 180,
+        emoji: "🌞",
+        color: "#ffd700",
+        bg: "bg-yellow-100",
+    },
+    {
+        id: "days_10",
+        title: "365 Club",
+        description: "Cook for an entire year (365 days)!",
+        type: "days",
+        threshold: 365,
+        emoji: "🎉",
+        color: "#a21caf",
+        bg: "bg-fuchsia-100",
+    },
+];
+
+// Helper to calculate locked/unlocked state
+export const calculateUserBadges = (userXp = 0, userCookDays = 0) => {
+    return BADGES.map((b) => {
+        const isUnlocked =
+            b.type === "xp"
+                ? userXp >= b.threshold
+                : userCookDays >= b.threshold;
+
+        const progress =
+            b.type === "xp"
+                ? Math.min((userXp / b.threshold) * 100, 100)
+                : Math.min((userCookDays / b.threshold) * 100, 100);
+
+        return {
+            ...b,
+            isUnlocked,
+            progress,
+        };
+    });
+};
