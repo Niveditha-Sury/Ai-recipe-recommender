@@ -20,23 +20,38 @@ exports.getRecommendation = async (req, res) => {
             user.allergies && user.allergies.length > 0 ? user.allergies : [];
 
         if (finalIngredients.length === 0) {
-            return res
-                .status(400)
-                .json({
-                    message:
-                        "Your pantry is empty. Add ingredients to your profile first!",
-                });
+            return res.status(400).json({
+                message:
+                    "Your pantry is empty. Add ingredients to your profile first!",
+            });
         }
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
+            model: "gemini-1.5-flash",
         });
 
         const prompt = `
-            Act as a professional chef. Suggest a recipe using: ${finalIngredients.join(", ")}. 
-            EXCLUDE these ingredients (Allergies): ${finalAllergies.join(", ") || "None"}.
-            Style: ${cuisine || "Any"}, Time: ${cookingTime || "Any"}, Diet: ${dietaryType || "None"}.
-            Response Format: Return ONLY a JSON object with 'title', 'ingredients' (array), and 'instructions' (string).
+            Act as a professional chef. Suggest 3 distinct and creative recipes using: ${finalIngredients.join(", ")}. 
+            EXCLUDE these ingredients (Allergies/Dislikes): ${finalAllergies.concat(user.neverShowMe || []).join(", ") || "None"}.
+            User Profile - Skill Level: ${user.experience || "beginner"}, Age: ${user.age || "adult"}.
+            Preferences - Cuisine: ${cuisine || "Any"}, Max Time: ${cookingTime || "Any"}, Diet: ${dietaryType || "None"}, Spice: ${spiceLevel || "Any"}.
+            
+            Response Format: Return ONLY a JSON object with a single key 'recipes' which is an array of objects.
+            Each recipe object must have the following fields:
+            - 'title': String
+            - 'emoji': A single relevant emoji String
+            - 'description': A short catchy description String (1-2 sentences)
+            - 'cuisine': String
+            - 'ingredients': Array of Strings
+            - 'steps': Array of Strings (the instructions)
+            - 'time': String (e.g. '20 min')
+            - 'calories': Number (integer)
+            - 'difficulty': String ('Easy', 'Medium', or 'Hard')
+            - 'servings': Number
+            - 'accent': A hex color code String that matches the recipe's vibe (e.g. '#FF5733')
+            - 'tags': Array of 3-4 relevant category tags (e.g. ['Quick', 'Healthy', 'Vegan'])
+            
+            Ensure the instructions are clear and the tone is encouraging.
         `;
 
         const result = await model.generateContent(prompt);
@@ -46,8 +61,8 @@ exports.getRecommendation = async (req, res) => {
             .trim();
 
         res.status(200).json({
-            message: "Smart recipe generated from your pantry!",
-            recipe: JSON.parse(text),
+            message: "Smart recipes generated from your pantry!",
+            recipes: JSON.parse(text).recipes,
         });
     } catch (error) {
         console.error("AI Recommendation Error:", error);
@@ -63,12 +78,10 @@ exports.identifyIngredientsAndRecommend = async (req, res) => {
         console.log("Checking API Connection...");
 
         if (!req.body) {
-            return res
-                .status(400)
-                .json({
-                    message:
-                        "Request body is missing. Check your middleware order.",
-                });
+            return res.status(400).json({
+                message:
+                    "Request body is missing. Check your middleware order.",
+            });
         }
 
         let imageData;
@@ -95,20 +108,20 @@ exports.identifyIngredientsAndRecommend = async (req, res) => {
                 },
             };
         } else {
-            return res
-                .status(400)
-                .json({
-                    message:
-                        "Please upload an image file or provide an imageUrl",
-                });
+            return res.status(400).json({
+                message: "Please upload an image file or provide an imageUrl",
+            });
         }
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
+            model: "gemini-1.5-flash",
         });
 
-        const prompt = `Analyze this image. List ingredients seen and suggest a recipe. 
-        Return ONLY a JSON object: {'identifiedIngredients': [], 'recipe': {'title': '', 'ingredients': [], 'instructions': ''}}`;
+        const prompt = `Analyze this image. List ingredients seen and suggest 3 distinct recipes that can be made with them. 
+        Return ONLY a JSON object with two keys: 
+        1. 'identifiedIngredients': an array of strings.
+        2. 'recipes': an array of recipe objects, each containing:
+           {'title': '', 'emoji': '', 'description': '', 'cuisine': '', 'ingredients': [], 'steps': [], 'time': '', 'calories': 0, 'difficulty': '', 'servings': 1, 'accent': '', 'tags': []}`;
 
         const result = await model.generateContent([prompt, imageData]);
         const text = result.response
@@ -117,13 +130,16 @@ exports.identifyIngredientsAndRecommend = async (req, res) => {
             .trim();
         const aiResponse = JSON.parse(text);
 
+        // We only save the first one as a default "primary" discovery, or we could handle multiple.
+        // For simplicity and to match the current schema, we'll save the first one but return all to the user.
+        const primaryRecipe = aiResponse.recipes[0];
+
         // Save and Award XP
         const newRecipe = new Recipe({
             userId: req.user.userId,
-            title: aiResponse.recipe.title,
-            ingredients: aiResponse.recipe.ingredients,
-            instructions: aiResponse.recipe.instructions,
+            ...primaryRecipe,
             recipeImage: req.file ? req.file.path : imageUrl,
+            identifiedIngredients: aiResponse.identifiedIngredients,
             isAIGenerated: true,
         });
 
@@ -135,9 +151,10 @@ exports.identifyIngredientsAndRecommend = async (req, res) => {
         );
 
         res.status(200).json({
-            message: "Ingredients identified and recipe saved!",
-            data: aiResponse,
-            recipeId: savedRecipe._id,
+            message: "Ingredients identified and recipes generated!",
+            identifiedIngredients: aiResponse.identifiedIngredients,
+            recipes: aiResponse.recipes,
+            savedRecipeId: savedRecipe._id,
         });
     } catch (error) {
         console.error("Vision Error:", error);
@@ -232,14 +249,4 @@ exports.getRecipeById = async (req, res) => {
     }
 };
 
-exports.getMyRecipes = async (req, res) => {
-    try {
-        const recipes = await Recipe.find({ userId: req.user.userId });
-        res.status(200).json(recipes);
-    } catch (error) {
-        res.status(500).json({
-            message: "Error fetching recipes",
-            error: error.message,
-        });
-    }
-};
+// exports.getMyRecipes moved to userController.js
