@@ -21,6 +21,22 @@ const userSchema = new mongoose.Schema({
     // Gamification
     xp: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
+    cookDays: { type: Number, default: 0 },
+    recentlyViewed: [
+        {
+            recipeId: String,
+            viewedAt: { type: Date, default: Date.now },
+        },
+    ],
+    history: [
+        {
+            recipeId: String,
+            title: String,
+            emoji: String,
+            cuisine: String,
+            cookedAt: { type: Date, default: Date.now },
+        },
+    ],
     badges: [
         {
             name: String,
@@ -28,14 +44,8 @@ const userSchema = new mongoose.Schema({
             unlockedAt: { type: Date, default: Date.now },
         },
     ],
+    savedRecipes: [Object],
 
-    // History
-    recentlyViewed: [
-        {
-            recipeId: { type: mongoose.Schema.Types.ObjectId, ref: "Recipe" },
-            viewedAt: { type: Date, default: Date.now },
-        },
-    ],
 });
 
 module.exports = mongoose.model("User", userSchema);

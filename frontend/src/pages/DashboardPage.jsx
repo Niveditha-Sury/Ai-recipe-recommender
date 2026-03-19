@@ -34,25 +34,52 @@ const QUICK_ADD_INGREDIENTS = [
 ];
 
 export default function DashboardPage() {
-    const { user, navigate, saved, toggleSave, addXp, handleCookDay } =
-        useApp();
+    const {
+        user,
+        navigate,
+        saved,
+        toggleSave,
+        addXp,
+        handleCookDay,
+        ingredients,
+        setIngredients,
+        results,
+        setResults,
+        aiIntro,
+        setAiIntro,
+        selectedCuisines,
+        setSelectedCuisines,
+        selectedDiets,
+        setSelectedDiets,
+        selectedTime,
+        setSelectedTime,
+        selectedSpice,
+        setSelectedSpice,
+        selectedCalories,
+        setSelectedCalories,
+        selectedServings,
+        setSelectedServings,
+    } = useApp();
 
     // New rich ingredient state
     const [ingredientInput, setIngredientInput] = useState("");
     const [qtyInput, setQtyInput] = useState("");
     const [imageInputs, setImageInputs] = useState([]); // Array<File>
     const [imagePreviews, setImagePreviews] = useState([]); // Array<DataURL>
-    const [ingredients, setIngredients] = useState([]); // [{id, type: 'text'|'image', name, qty, image}]
+    // const [ingredients, setIngredients] = useState([]); // Moved to Context
 
+    // Filter states moved to Context
+    /*
     const [selectedCuisines, setSelectedCuisines] = useState([]);
     const [selectedDiets, setSelectedDiets] = useState([]);
     const [selectedTime, setSelectedTime] = useState("");
     const [selectedSpice, setSelectedSpice] = useState("");
     const [selectedCalories, setSelectedCalories] = useState("");
     const [selectedServings, setSelectedServings] = useState("");
+    */
     const [showMobileFilters, setShowMobileFilters] = useState(false);
-    const [results, setResults] = useState(RECIPES);
-    const [aiIntro, setAiIntro] = useState("");
+    // const [results, setResults] = useState(RECIPES); // Moved to Context
+    // const [aiIntro, setAiIntro] = useState(""); // Moved to Context
     const [loading, setLoading] = useState(false);
     const [stream, setStream] = useState("");
 
@@ -234,6 +261,7 @@ export default function DashboardPage() {
 
         try {
             const response = await aiAPI.getRecommendations({
+                ingredients: ingredients.map(i => i.name),
                 cuisine: selectedCuisines[0], // Backend currently handles single cuisine
                 cookingTime: selectedTime,
                 dietaryType: selectedDiets[0],
@@ -252,12 +280,14 @@ export default function DashboardPage() {
             setAiIntro("Here are some wonderful recipes crafted just for you!");
             setStream("Here are some wonderful recipes crafted just for you!");
         } catch (err) {
-            console.error(err);
+            console.error("AI Recommendation Error:", err);
+            const errorMessage = err.response?.data?.message || err.message;
             setStream(
-                "Error getting AI recommendations. Please check your connection: " +
-                    err.message,
+                "I'm sorry, I'm having trouble connecting to my creative kitchen: " +
+                    errorMessage
             );
-            setAiIntro("Error getting AI recommendations.");
+            setAiIntro("Connection issue.");
+            setResults([]); // Clear results on error instead of showing stale or dummy data
         }
 
         setLoading(false);

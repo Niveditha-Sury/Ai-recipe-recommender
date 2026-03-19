@@ -138,6 +138,7 @@ export function AccountPersonalizationCard({
                                             "allergies",
                                             newAllergy,
                                             setNewAllergy,
+                                            true
                                         )
                                     }
                                 />
@@ -175,7 +176,7 @@ export function AccountPersonalizationCard({
                                             className="bg-none border-none cursor-pointer p-0 flex items-center justify-center hover:text-red-500 transition-colors"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleRemoveTag("allergies", t);
+                                                handleRemoveTag("allergies", t, true);
                                             }}
                                         >
                                             <FiX />
@@ -224,6 +225,7 @@ export function AccountPersonalizationCard({
                                             "neverShowMe",
                                             newDislike,
                                             setNewDislike,
+                                            true
                                         )
                                     }
                                 />

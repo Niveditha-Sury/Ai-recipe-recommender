@@ -43,6 +43,7 @@ export default function AuthPage({ mode }) {
                             name: resolvedName,
                             email: form.email,
                         },
+                        token, // Pass the token so App.jsx can fetch the full profile
                     );
                 } else {
                     response = await authAPI.signup({

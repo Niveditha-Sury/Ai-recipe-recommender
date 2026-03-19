@@ -6,6 +6,7 @@ import { RECIPES } from "../data/constants";
 import { AccountPersonalizationCard } from "../components/AccountPersonalizationCard";
 import { AccountPantryCard } from "../components/AccountPantryCard";
 import { AccountBadgesCard } from "../components/AccountBadgesCard";
+import { resolvePic } from "../lib/utils";
 
 export default function AccountPage() {
     const { user, saved, toggleSave, navigate } = useApp();
@@ -59,7 +60,7 @@ export default function AccountPage() {
                         ? "transparent"
                         : "var(--brand-primary)",
                     backgroundImage: user.coverPic
-                        ? `linear-gradient(rgba(30, 15, 0, 0.4), rgba(61, 32, 16, 0.8)), url(${user.coverPic})`
+                        ? `linear-gradient(rgba(30, 15, 0, 0.4), rgba(61, 32, 16, 0.8)), url(${resolvePic(user.coverPic)})`
                         : "linear-gradient(to bottom right, var(--brand-primary), var(--brand-primary))",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
@@ -80,7 +81,7 @@ export default function AccountPage() {
                     <div className="w-[80px] h-[80px] md:w-[100px] md:h-[100px] rounded-full bg-brand-secondary text-white flex items-center justify-center font-black text-[32px] md:text-[40px] shadow-xl mb-4 border-4 border-brand-bg/20 overflow-hidden relative mt-8 md:mt-2">
                         {user.profilePic ? (
                             <img
-                                src={user.profilePic}
+                                src={resolvePic(user.profilePic)}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
                             />
@@ -237,34 +238,36 @@ export default function AccountPage() {
                         {/* Recent History Card */}
                         <div className="card slide-up rounded-card p-6">
                             <h2 className="serif text-[22px] font-black text-brand-primary mb-5">
-                                Recently Viewed
+                                Cooking History
                             </h2>
                             <div className="flex flex-col gap-4">
-                                {mockHistory.map((h) => (
-                                    <div
-                                        key={h.id}
-                                        className="flex gap-3 items-center group cursor-default"
-                                        onClick={() => navigate("recipe", h)}
-                                    >
+                                {(user.history && user.history.length > 0) ? (
+                                    user.history.map((h, idx) => (
                                         <div
-                                            className="w-[50px] h-[50px] rounded-xl flex items-center justify-center text-[22px] transition-transform group-hover:scale-105"
-                                            style={{
-                                                background: h.accent + "33",
-                                                color: h.accent,
-                                            }}
+                                            key={h.recipeId || idx}
+                                            className="flex gap-3 items-center group cursor-pointer"
+                                            onClick={() => navigate("recipe", { id: h.recipeId, ...h })}
                                         >
-                                            {h.emoji}
+                                            <div
+                                                className="w-[50px] h-[50px] rounded-xl flex items-center justify-center text-[22px] transition-transform group-hover:scale-105 bg-brand-primary/5 text-brand-secondary"
+                                            >
+                                                {h.emoji || "🍳"}
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-bold text-brand-primary text-[14px] leading-tight group-hover:text-brand-secondary transition-colors">
+                                                    {h.title}
+                                                </p>
+                                                <p className="text-[11px] text-brand-primary/80 mt-0.5 uppercase tracking-wider">
+                                                    {h.cuisine} • {h.cookedAt ? new Date(h.cookedAt).toLocaleDateString() : "Recently"}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-brand-primary text-[14px] leading-tight group-hover:text-brand-secondary transition-colors">
-                                                {h.title}
-                                            </p>
-                                            <p className="text-[11px] text-brand-primary/80 mt-0.5 uppercase tracking-wider">
-                                                {h.cuisine}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-brand-primary/50 text-center py-4">
+                                        No cooking history yet. Time to get cooking!
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>

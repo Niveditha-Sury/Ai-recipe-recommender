@@ -62,18 +62,29 @@ export default function App() {
         return localStorage.getItem("appitat_theme") || "light";
     });
 
-    // Fetch user profile on mount if token exists
+    // Dashboard Persistence States
+    const [dashIngredients, setDashIngredients] = useState([]);
+    const [dashResults, setDashResults] = useState(RECIPES);
+    const [dashAiIntro, setDashAiIntro] = useState("");
+    const [dashSelectedCuisines, setDashSelectedCuisines] = useState([]);
+    const [dashSelectedDiets, setDashSelectedDiets] = useState([]);
+    const [dashSelectedTime, setDashSelectedTime] = useState("");
+    const [dashSelectedSpice, setDashSelectedSpice] = useState("");
+    const [dashSelectedCalories, setDashSelectedCalories] = useState("");
+    const [dashSelectedServings, setDashSelectedServings] = useState("");
+
+    // Fetch user profile on mount if token exists but no user state
     useEffect(() => {
         const fetchProfile = async () => {
             const token = localStorage.getItem("appitat_token");
-            if (token && !user) {
+            if (token) {
                 try {
                     const response = await userAPI.getProfile();
                     setUser(response.data);
 
-                    // Also fetch saved recipes if not already in user object
-                    const savedResponse = await userAPI.getMyRecipes();
-                    setSaved(savedResponse.data || []);
+                    if (response.data.savedRecipes) {
+                        setSaved(response.data.savedRecipes);
+                    }
                 } catch (err) {
                     console.error("Session expired or invalid token");
                     localStorage.removeItem("appitat_token");
@@ -132,8 +143,34 @@ export default function App() {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    const login = (u) => setUser(u);
-    const updateUser = (data) => setUser((prev) => ({ ...prev, ...data }));
+    const login = async (u, token) => {
+        // Set the initial user from the login response
+        setUser(u);
+        // Then immediately fetch the full profile from DB to get all fields
+        if (token) {
+            try {
+                const response = await userAPI.getProfile();
+                setUser(response.data);
+            } catch (err) {
+                console.error("Failed to fetch full profile after login", err);
+            }
+        }
+    };
+    const updateUser = async (data, shouldSync = false) => {
+        setUser((prev) => {
+            if (!prev) return prev;
+            return { ...prev, ...data };
+        });
+
+        if (shouldSync) {
+            try {
+                await userAPI.updateProfile(data);
+                console.log("Profile auto-synced successfully");
+            } catch (err) {
+                console.error("Failed to auto-sync profile:", err);
+            }
+        }
+    };
     const logout = () => {
         localStorage.removeItem("appitat_token");
         setUser(null);
@@ -142,23 +179,31 @@ export default function App() {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    const toggleSave = (r) => {
-        setSaved((p) =>
-            p.find((x) => x.id === r.id)
+    const toggleSave = async (r) => {
+        setSaved((p) => {
+            const newList = p.find((x) => x.id === r.id)
                 ? p.filter((x) => x.id !== r.id)
-                : [...p, r],
-        );
+                : [...p, r];
+            
+            // Sync to backend if logged in
+            if (user) {
+                userAPI.syncSavedRecipes(newList).catch(err => 
+                    console.error("Failed to sync saved recipes:", err)
+                );
+            }
+            return newList;
+        });
     };
 
     const checkBadgeUnlocks = (oldUser, newUser) => {
         if (!oldUser || !newUser) return;
         const oldBadges = calculateUserBadges(
             oldUser.xp || 0,
-            oldUser.cookDays || 14,
+            oldUser.cookDays || 0,
         );
         const newBadges = calculateUserBadges(
             newUser.xp || 0,
-            newUser.cookDays || 14,
+            newUser.cookDays || 0,
         );
 
         const newlyUnlocked = newBadges.find(
@@ -174,28 +219,78 @@ export default function App() {
         }
     };
 
-    const addXp = (amount) => {
-        setUser((prev) => {
-            if (!prev) return prev;
-            const updated = {
-                ...prev,
-                xp: (prev.xp || 0) + amount,
-            };
-            checkBadgeUnlocks(prev, updated);
-            return updated;
-        });
+    const addXp = async (amount, recipeMetadata = null) => {
+        if (!user) return;
+        
+        const currentXp = user.xp || 0;
+        const newXp = currentXp + amount;
+        const newLevel = Math.floor(newXp / 500) + 1;
+
+        const updatedUser = {
+            ...user,
+            xp: newXp,
+            level: newLevel
+        };
+
+        // Update local state immediately for responsive UI
+        setUser(updatedUser);
+        checkBadgeUnlocks(user, updatedUser);
+
+        // Sync to backend
+        try {
+            // 1. Sync XP
+            const res = await userAPI.addXp(amount);
+            
+            // 2. Record Cook if metadata provided
+            if (recipeMetadata) {
+                try {
+                    const recordRes = await userAPI.recordCook({
+                        recipeId: recipeMetadata.id,
+                        title: recipeMetadata.title,
+                        emoji: typeof recipeMetadata.emoji === 'string' ? recipeMetadata.emoji : "🍳",
+                        cuisine: recipeMetadata.cuisine
+                    });
+                    if (recordRes.data?.user) {
+                        setUser(recordRes.data.user);
+                        return; // Done
+                    }
+                } catch (recordErr) {
+                    console.error("Failed to record cook history:", recordErr);
+                }
+            }
+
+            // Fallback: Update local state with the authoritative values from the DB if recordCook didn't
+            if (res.data?.user) {
+                setUser(res.data.user);
+            }
+        } catch (err) {
+            console.error("Failed to sync progress to backend:", err.response?.data || err.message);
+            if (err.response?.status === 401) {
+                alert("Your session has expired. Please log in again to save your progress.");
+                logout();
+            }
+        }
     };
 
-    const handleCookDay = () => {
-        setUser((prev) => {
-            if (!prev) return prev;
-            const updated = {
-                ...prev,
-                cookDays: (prev.cookDays || 14) + 1,
-            };
-            checkBadgeUnlocks(prev, updated);
-            return updated;
-        });
+    const handleCookDay = async () => {
+        if (!user) return;
+        
+        const newCookDays = (user.cookDays || 0) + 1;
+        const updatedLocal = {
+            ...user,
+            cookDays: newCookDays
+        };
+        
+        // Update local state and check badges
+        setUser(updatedLocal);
+        checkBadgeUnlocks(user, updatedLocal);
+
+        // Persist to backend
+        try {
+            await userAPI.updateProfile({ cookDays: newCookDays });
+        } catch (err) {
+            console.error("Failed to sync cook days to backend:", err);
+        }
     };
 
     const showNav =
@@ -221,6 +316,25 @@ export default function App() {
                     : [],
                 theme,
                 toggleTheme,
+                // Dashboard States
+                ingredients: dashIngredients,
+                setIngredients: setDashIngredients,
+                results: dashResults,
+                setResults: setDashResults,
+                aiIntro: dashAiIntro,
+                setAiIntro: setDashAiIntro,
+                selectedCuisines: dashSelectedCuisines,
+                setSelectedCuisines: setDashSelectedCuisines,
+                selectedDiets: dashSelectedDiets,
+                setSelectedDiets: setDashSelectedDiets,
+                selectedTime: dashSelectedTime,
+                setSelectedTime: setDashSelectedTime,
+                selectedSpice: dashSelectedSpice,
+                setSelectedSpice: setDashSelectedSpice,
+                selectedCalories: dashSelectedCalories,
+                setSelectedCalories: setDashSelectedCalories,
+                selectedServings: dashSelectedServings,
+                setSelectedServings: setDashSelectedServings,
             }}
         >
             {/* Global Badge Unlock Notification Toaster */}

@@ -32,4 +32,13 @@ router.get("/my-recipes", auth, userController.getMyRecipes);
 // Update basic profile info (name, age, etc.)
 router.put("/profile", auth, userController.updateProfile);
 
+// Add XP (dedicated endpoint for atomic XP increments)
+router.post("/add-xp", auth, userController.addXp);
+
+// Record a cook event
+router.post("/record-cook", auth, userController.recordCook);
+
+// Sync saved recipes
+router.post("/sync-saved", auth, userController.syncSavedRecipes);
+
 module.exports = router;

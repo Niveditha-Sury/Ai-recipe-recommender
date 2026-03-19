@@ -19,10 +19,11 @@ exports.signup = async (req, res) => {
 
         res.status(201).json({ message: "User created successfully" });
     } catch (error) {
-        console.error("SIGNUP ERROR:", error); // Log the actual error to your terminal
+        console.error("SIGNUP ERROR DETAILS:", error);
         res.status(500).json({
             message: "Error creating user",
             error: error.message,
+            stack: error.stack
         });
     }
 };
@@ -43,21 +44,27 @@ exports.login = async (req, res) => {
         }
         // Create token
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-            expiresIn: "1h",
+            expiresIn: "7d",
         });
 
-        // Create a user object without the password
+        // Create a user object without the password - include ALL fields
         const userData = {
             _id: user._id,
             name: user.name,
             email: user.email,
             profilePic: user.profilePic,
+            coverPic: user.coverPic,
             pantry: user.pantry,
+            allergies: user.allergies,
+            neverShowMe: user.neverShowMe,
             xp: user.xp,
             level: user.level,
             experience: user.experience,
             age: user.age,
-            neverShowMe: user.neverShowMe,
+            xp: user.xp,
+            level: user.level,
+            badges: user.badges,
+            cookDays: user.cookDays,
         };
 
         res.json({ token, user: userData });

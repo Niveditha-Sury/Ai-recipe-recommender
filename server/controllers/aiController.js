@@ -1,33 +1,45 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const fs = require("fs");
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+if (!process.env.GOOGLE_API_KEY) {
+    console.error("CRITICAL: GOOGLE_API_KEY is not defined in .env");
+}
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
 const User = require("../models/User");
 const Recipe = require("../models/Recipe");
 const axios = require("axios");
 
 exports.getRecommendation = async (req, res) => {
     try {
-        const { cuisine, cookingTime, dietaryType, spiceLevel } = req.body;
+        const { cuisine, cookingTime, dietaryType, spiceLevel, ingredients: reqIngredients } = req.body;
+        console.log("[AI] Request Body:", req.body);
 
         // Fetch the user's saved data from MongoDB
         const user = await User.findById(req.user.userId);
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) {
+            console.log("[AI] User not found:", req.user.userId);
+            return res.status(404).json({ message: "User not found" });
+        }
 
-        // Use saved pantry and allergies
-        const finalIngredients =
-            user.pantry && user.pantry.length > 0 ? user.pantry : [];
+        // Combined ingredients: Pantry + Request Ingredients
+        const pantryItems = user.pantry || [];
+        const extraIngredients = reqIngredients || [];
+        const finalIngredients = [...new Set([...pantryItems, ...extraIngredients])];
+        
+        console.log("[AI] finalIngredients:", finalIngredients);
+
         const finalAllergies =
             user.allergies && user.allergies.length > 0 ? user.allergies : [];
 
         if (finalIngredients.length === 0) {
             return res.status(400).json({
                 message:
-                    "Your pantry is empty. Add ingredients to your profile first!",
+                    "Your ingredient list is empty. Add ingredients to your search or profile first!",
             });
         }
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-3.1-flash-lite-preview",
+            generationConfig: { responseMimeType: "application/json" }
         });
 
         const prompt = `
@@ -36,22 +48,23 @@ exports.getRecommendation = async (req, res) => {
             User Profile - Skill Level: ${user.experience || "beginner"}, Age: ${user.age || "adult"}.
             Preferences - Cuisine: ${cuisine || "Any"}, Max Time: ${cookingTime || "Any"}, Diet: ${dietaryType || "None"}, Spice: ${spiceLevel || "Any"}.
             
-            Response Format: Return ONLY a JSON object with a single key 'recipes' which is an array of objects.
-            Each recipe object must have the following fields:
-            - 'title': String
-            - 'emoji': A single relevant emoji String
-            - 'description': A short catchy description String (1-2 sentences)
-            - 'cuisine': String
-            - 'ingredients': Array of Strings
-            - 'steps': Array of Strings (the instructions)
-            - 'time': String (e.g. '20 min')
-            - 'calories': Number (integer)
-            - 'difficulty': String ('Easy', 'Medium', or 'Hard')
-            - 'servings': Number
-            - 'accent': A hex color code String that matches the recipe's vibe (e.g. '#FF5733')
-            - 'tags': Array of 3-4 relevant category tags (e.g. ['Quick', 'Healthy', 'Vegan'])
+            IMPORTANT: For visual consistency, you MUST provide a vibrant Hex color code for the 'accent' field.
+            Recommended Premium Accents: #F5C842 (Saffron), #FF8C69 (Salmon), #E85D4A (Harissa), #4CAF50 (Green), #FF9F1C (Orange), #C0392B (Red).
             
-            Ensure the instructions are clear and the tone is encouraging.
+            Response Format: Return a JSON object with a single key 'recipes' which is an array of objects.
+            Each recipe object MUST have these fields:
+            - title (string)
+            - emoji (string emoji, e.g. "🥗")
+            - description (string, 2 sentences max)
+            - cuisine (string)
+            - ingredients (array of strings)
+            - steps (array of strings)
+            - time (string, e.g. "25 min")
+            - calories (number)
+            - difficulty (string: Easy, Medium, or Hard)
+            - servings (number)
+            - accent (string hex code, e.g. "#FF5733")
+            - tags (array of strings, e.g. ["Vegan", "Gluten-Free"])
         `;
 
         const result = await model.generateContent(prompt);
@@ -114,7 +127,7 @@ exports.identifyIngredientsAndRecommend = async (req, res) => {
         }
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
         });
 
         const prompt = `Analyze this image. List ingredients seen and suggest 3 distinct recipes that can be made with them. 
@@ -232,10 +245,10 @@ exports.getRecipeById = async (req, res) => {
         if (!recipe)
             return res.status(404).json({ message: "Recipe not found" });
 
-        // Update user's history with the viewed recipe
+        // Update user's recentlyViewed with the viewed recipe
         await User.findByIdAndUpdate(userId, {
             $push: {
-                history: {
+                recentlyViewed: {
                     $each: [{ recipeId: id }],
                     $position: 0,
                     $slice: 5,

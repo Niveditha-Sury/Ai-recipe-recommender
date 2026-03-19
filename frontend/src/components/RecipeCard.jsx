@@ -3,6 +3,7 @@ import { FiClock } from "react-icons/fi";
 import { FaFire, FaHeart, FaRegHeart } from "react-icons/fa6";
 
 const RecipeCardOuter = ({ r, index, isSaved, toggleSave, navigate }) => {
+    const accent = r.accent || "#F5824A";
     return (
         <div
             className="slide-up rounded-card overflow-hidden cursor-default flex flex-col bg-brand-card border border-brand-primary/10 transition-all duration-300 hover:-translate-y-[4px] hover:shadow-[0_14px_48px_rgba(37,79,34,0.18)]"
@@ -11,7 +12,7 @@ const RecipeCardOuter = ({ r, index, isSaved, toggleSave, navigate }) => {
             {/* Accent bar + shimmer on hover */}
             <div
                 className="h-1.5 relative overflow-hidden"
-                style={{ background: r.accent }}
+                style={{ background: accent }}
             >
                 <div className="absolute inset-0 ai-shimmer" />
             </div>
@@ -24,8 +25,8 @@ const RecipeCardOuter = ({ r, index, isSaved, toggleSave, navigate }) => {
                         <div
                             className="w-[52px] h-[52px] rounded-button flex items-center justify-center text-[26px]"
                             style={{
-                                background: r.accent + "22",
-                                color: r.accent,
+                                background: accent + "22",
+                                color: accent,
                             }}
                         >
                             {r.emoji}
@@ -41,10 +42,10 @@ const RecipeCardOuter = ({ r, index, isSaved, toggleSave, navigate }) => {
                     </div>
                 </div>
                 <p className="text-[14px] text-brand-primary/80 leading-relaxed mb-4 flex-1">
-                    {r.description.slice(0, 100)}…
+                    {(r.description || "").slice(0, 100)}…
                 </p>
                 <div className="flex flex-wrap gap-1.5 mb-4">
-                    {r.tags.map((t) => (
+                    {(r.tags || []).map((t) => (
                         <span key={t} className="tag pointer-events-none">
                             {t}
                         </span>

@@ -1,8 +1,10 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
-    // Get token from header
-    const token = req.header("Authorization")?.split(" ")[1];
+    const authHeader = req.header("Authorization");
+    const token = authHeader?.startsWith("Bearer ") 
+        ? authHeader.substring(7) 
+        : authHeader;
 
     if (!token) {
         return res
@@ -11,13 +13,17 @@ module.exports = (req, res, next) => {
     }
 
     try {
-        // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // Add the user ID
-        req.user = decoded;
+        console.log("[Auth Middleware] Decoded token:", decoded);
+        
+        req.user = { 
+            userId: decoded.id || decoded.userId 
+        };
+        
+        console.log("[Auth Middleware] Set req.user:", req.user);
         next();
     } catch (err) {
+        console.error("[Auth Middleware] Token validation error:", err.message);
         res.status(401).json({ message: "Token is not valid" });
     }
 };

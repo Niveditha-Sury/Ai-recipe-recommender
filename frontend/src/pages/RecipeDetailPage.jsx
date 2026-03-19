@@ -30,14 +30,15 @@ export default function RecipeDetailPage({ recipe }) {
         );
     }
 
+    const accent = recipe.accent || "#F5824A";
     const isSaved = saved.find((s) => s.id === recipe.id);
 
-    const handleCooked = () => {x``
+    const handleCooked = () => {
         let xpAmount = 50; // Easy
         if (recipe.difficulty === "Medium") xpAmount = 100;
         if (recipe.difficulty === "Hard") xpAmount = 150;
 
-        addXp(xpAmount);
+        addXp(xpAmount, recipe);
         setEarnedXp(xpAmount);
         setShowXpToast(true);
 
@@ -46,7 +47,7 @@ export default function RecipeDetailPage({ recipe }) {
             particleCount: 100,
             spread: 70,
             origin: { y: 0.6 },
-            colors: [recipe.accent, "#F5C842", "#4CAF50"],
+            colors: [accent, "#F5C842", "#4CAF50"],
         });
 
         setTimeout(() => setShowXpToast(false), 3000);
@@ -54,7 +55,7 @@ export default function RecipeDetailPage({ recipe }) {
 
     return (
         <div className="min-h-screen bg-brand-bg">
-            <div className="h-1.5" style={{ background: recipe.accent }} />
+            <div className="h-1.5" style={{ background: accent }} />
             <div className="max-w-[1000px] mx-auto px-6 py-12">
                 <button
                     className="inline-flex items-center gap-2 bg-none border-none cursor-pointer text-brand-primary/80 text-sm font-semibold mb-8 hover:text-brand-secondary transition-colors"
@@ -63,11 +64,11 @@ export default function RecipeDetailPage({ recipe }) {
                     ← Back to recipes
                 </button>
 
-                <div className="slide-up bg-brand-card rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
+                <div className="slide-up bg-brand-card rounded-3xl overflow-hidden shadow-[0_8px_40_rgba(0,0,0,0.08)]">
                     <div
                         className="p-6 md:p-10 pb-8 md:pb-10 border-b border-brand-primary/10"
                         style={{
-                            background: `linear-gradient(135deg, ${recipe.accent}22, ${recipe.accent}08)`,
+                            background: `linear-gradient(135deg, ${accent}22, ${accent}08)`,
                         }}
                     >
                         <div className="flex items-start justify-between gap-5 flex-wrap">
@@ -75,16 +76,16 @@ export default function RecipeDetailPage({ recipe }) {
                                 <div
                                     className="w-[88px] h-[88px] rounded-[22px] flex items-center justify-center text-5xl shrink-0"
                                     style={{
-                                        background: recipe.accent + "33",
-                                        color: recipe.accent,
+                                        background: accent + "33",
+                                        color: accent,
                                     }}
                                 >
-                                    {recipe.emoji}
+                                    <span className="leading-none">{recipe.emoji}</span>
                                 </div>
                                 <div>
                                     <p
                                         className="text-[11px] font-bold uppercase tracking-widest mb-1.5"
-                                        style={{ color: recipe.accent }}
+                                        style={{ color: accent }}
                                     >
                                         {recipe.cuisine}
                                     </p>
@@ -102,7 +103,7 @@ export default function RecipeDetailPage({ recipe }) {
                                         </span>
                                         <span
                                             className="font-bold"
-                                            style={{ color: recipe.accent }}
+                                            style={{ color: accent }}
                                         >
                                             {recipe.difficulty}
                                         </span>
@@ -114,12 +115,12 @@ export default function RecipeDetailPage({ recipe }) {
                                     className="flex items-center gap-2 border-2 rounded-xl px-4 py-2.5 cursor-pointer font-bold text-sm transition-all duration-200"
                                     style={{
                                         background: isSaved
-                                            ? recipe.accent
+                                            ? accent
                                             : "var(--color-brand-card)",
                                         color: isSaved
                                             ? "var(--color-brand-bg)"
-                                            : recipe.accent,
-                                        borderColor: recipe.accent,
+                                            : accent,
+                                        borderColor: accent,
                                     }}
                                     onClick={() => toggleSave(recipe)}
                                 >
@@ -138,9 +139,9 @@ export default function RecipeDetailPage({ recipe }) {
                                 <button
                                     className="flex items-center gap-2 border-2 rounded-xl px-5 py-2.5 cursor-pointer font-bold text-sm transition-all duration-200 hover:scale-105 shadow-md"
                                     style={{
-                                        background: recipe.accent,
+                                        background: accent,
                                         color: "var(--color-brand-bg)",
-                                        borderColor: recipe.accent,
+                                        borderColor: accent,
                                     }}
                                     onClick={handleCooked}
                                 >
@@ -165,7 +166,7 @@ export default function RecipeDetailPage({ recipe }) {
                                         <span
                                             className="w-2 h-2 rounded-full shrink-0 mt-1.5"
                                             style={{
-                                                background: recipe.accent,
+                                                background: accent,
                                             }}
                                         />
                                         {ing}
@@ -184,7 +185,7 @@ export default function RecipeDetailPage({ recipe }) {
                                         <div
                                             className="w-7 h-7 rounded-full text-white flex items-center justify-center font-extrabold text-[13px] shrink-0"
                                             style={{
-                                                background: recipe.accent,
+                                                background: accent,
                                             }}
                                         >
                                             {i + 1}
@@ -202,8 +203,8 @@ export default function RecipeDetailPage({ recipe }) {
                         <div
                             className="rounded-2xl p-5"
                             style={{
-                                background: recipe.accent + "11",
-                                border: `1px solid ${recipe.accent}33`,
+                                background: accent + "11",
+                                border: `1px solid ${accent}33`,
                             }}
                         >
                             <p className="text-[13px] text-brand-primary/80 leading-relaxed">

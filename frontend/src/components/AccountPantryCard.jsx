@@ -50,14 +50,19 @@ export function AccountPantryCard({
                                     onChange={(e) =>
                                         setNewPantryItem(e.target.value)
                                     }
-                                    onKeyDown={(e) =>
+                                    onKeyDown={(e) => {
                                         handleAddTag(
                                             e,
                                             "pantry",
                                             newPantryItem,
                                             setNewPantryItem,
-                                        )
-                                    }
+                                            (newItem) => {
+                                                updateUser({
+                                                    pantry: [...user.pantry, newItem.trim()],
+                                                }, true);
+                                            }
+                                        );
+                                    }}
                                 />
                             )}
                             {!hideEditToggle && (

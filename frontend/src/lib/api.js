@@ -40,14 +40,17 @@ export const aiAPI = {
 export const userAPI = {
     getProfile: () => api.get("/user/profile"),
     updateProfile: (data) => api.put("/user/profile", data),
+    addXp: (amount) => api.post("/user/add-xp", { amount }),
     updatePantry: (data) => api.put("/user/pantry", data),
     getMyRecipes: () => api.get("/user/my-recipes"),
+    recordCook: (recipeData) => api.post("/user/record-cook", recipeData),
     updateImages: (formData) =>
         api.put("/user/update-images", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
         }),
+    syncSavedRecipes: (savedRecipes) => api.post("/user/sync-saved", { savedRecipes }),
 };
 
 export default api;

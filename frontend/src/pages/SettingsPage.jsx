@@ -4,6 +4,7 @@ import { FiCamera, FiCheck, FiArrowLeft } from "react-icons/fi";
 import { AccountPersonalizationCard } from "../components/AccountPersonalizationCard";
 import { AccountPantryCard } from "../components/AccountPantryCard";
 import { userAPI } from "../lib/api";
+import { resolvePic } from "../lib/utils";
 
 export default function SettingsPage() {
     const { user, updateUser, navigate } = useApp();
@@ -15,6 +16,9 @@ export default function SettingsPage() {
     const [newAllergy, setNewAllergy] = useState("");
     const [newDislike, setNewDislike] = useState("");
     const [newPantryItem, setNewPantryItem] = useState("");
+    const [profileFile, setProfileFile] = useState(null);
+    const [coverFile, setCoverFile] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const [editMode, setEditMode] = useState({
         age: true,
@@ -45,7 +49,23 @@ export default function SettingsPage() {
     };
 
     const handleSave = async () => {
+        setIsSaving(true);
         try {
+            // 1. Upload images if any
+            if (profileFile || coverFile) {
+                const formData = new FormData();
+                if (profileFile) formData.append("profilePic", profileFile);
+                if (coverFile) formData.append("coverPic", coverFile);
+                
+                const imgRes = await userAPI.updateImages(formData);
+                // The backend returns the new paths
+                if (imgRes.data) {
+                    localUser.profilePic = imgRes.data.profilePic || localUser.profilePic;
+                    localUser.coverPic = imgRes.data.coverPic || localUser.coverPic;
+                }
+            }
+
+            // 2. Update profile data - include EVERY personalization and gamification field
             await userAPI.updateProfile({
                 name: localUser.name,
                 email: localUser.email,
@@ -54,15 +74,20 @@ export default function SettingsPage() {
                 allergies: localUser.allergies,
                 pantry: localUser.pantry,
                 neverShowMe: localUser.neverShowMe,
-                profilePic: localUser.profilePic,
-                coverPic: localUser.coverPic,
+                cookDays: localUser.cookDays, // Sync cookDays
+                xp: localUser.xp,
+                level: localUser.level,
             });
+
+            updateUser(localUser);
+            setHasUnsavedChanges(false);
+            navigate("account");
         } catch (err) {
             console.error("Failed to save profile:", err);
+            alert("Error saving profile changes. Please try again.");
+        } finally {
+            setIsSaving(false);
         }
-        updateUser(localUser);
-        setHasUnsavedChanges(false);
-        navigate("account");
     };
 
     const handleCancel = () => {
@@ -77,13 +102,16 @@ export default function SettingsPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Save the file for later upload
+        if (type === "profile") setProfileFile(file);
+        if (type === "cover") setCoverFile(file);
+
+        // Preview locally
         const reader = new FileReader();
         reader.onloadend = () => {
-            if (type === "profile") {
-                handleLocalUpdate({ profilePic: reader.result });
-            } else if (type === "cover") {
-                handleLocalUpdate({ coverPic: reader.result });
-            }
+            handleLocalUpdate({ 
+                [type === "profile" ? "profilePic" : "coverPic"]: reader.result 
+            });
         };
         reader.readAsDataURL(file);
     };
@@ -114,8 +142,8 @@ export default function SettingsPage() {
                     backgroundColor: user.coverPic
                         ? "transparent"
                         : "var(--brand-primary)",
-                    backgroundImage: user.coverPic
-                        ? `linear-gradient(rgba(30, 15, 0, 0.4), rgba(61, 32, 16, 0.8)), url(${user.coverPic})`
+                    backgroundImage: localUser.coverPic
+                        ? `linear-gradient(rgba(30, 15, 0, 0.4), rgba(61, 32, 16, 0.8)), url(${resolvePic(localUser.coverPic)})`
                         : "linear-gradient(to bottom right, var(--brand-primary), var(--brand-primary))",
                     backgroundSize: "cover",
                     backgroundPosition: "center",
@@ -153,7 +181,7 @@ export default function SettingsPage() {
                         <div className="w-[80px] h-[80px] md:w-[100px] md:h-[100px] rounded-full bg-brand-secondary text-white flex items-center justify-center font-black text-[32px] md:text-[40px] shadow-xl mb-4 border-4 border-brand-bg/20 overflow-hidden relative">
                             {localUser.profilePic ? (
                                 <img
-                                    src={localUser.profilePic}
+                                    src={resolvePic(localUser.profilePic)}
                                     alt="Profile"
                                     className="w-full h-full object-cover"
                                 />
@@ -256,10 +284,11 @@ export default function SettingsPage() {
                 {/* Global Save Button */}
                 <div className="mt-12 flex justify-center slide-up">
                     <button
-                        className="btn-primary px-12 py-4 rounded-xl text-[16px] shadow-xl hover:scale-105 transition-transform"
+                        className="btn-primary px-12 py-4 rounded-xl text-[16px] shadow-xl hover:scale-105 transition-transform disabled:opacity-50 disabled:scale-100"
                         onClick={handleSave}
+                        disabled={isSaving}
                     >
-                        Save Profile Changes
+                        {isSaving ? "Saving..." : "Save Profile Changes"}
                     </button>
                 </div>
             </div>
