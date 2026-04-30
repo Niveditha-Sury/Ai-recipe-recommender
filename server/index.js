@@ -9,16 +9,18 @@ connectDB();
 
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL || "https://appitat.netlify.app",
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE"],
+        origin: [
+            process.env.FRONTEND_URL,       
+            "https://appitat.vercel.app",
+            "http://localhost:5173",
+            "http://localhost:5174",
+        ].filter(Boolean),
     }),
 );
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/uploads", express.static("uploads"));
 
-// Mount Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/ai", require("./routes/aiRoutes"));
 app.use("/api/user", userRoutes);

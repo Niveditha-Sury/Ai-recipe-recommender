@@ -9,8 +9,8 @@ import {
 import { AppContext } from "./context/AppContext";
 import Navbar from "./components/Navbar";
 import BackToTopButton from "./components/BackToTopButton";
+import MobileBottomNav from "./components/MobileBottomNav";
 
-// Lazy-loaded routes for performance optimization
 const HeroPage = lazy(() => import("./pages/HeroPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
@@ -37,7 +37,6 @@ export default function App() {
     const [saved, setSaved] = useLocalStorage("appitat_saved", []);
     const [achievedBadge, setAchievedBadge] = useState(null);
 
-    // Dashboard Persistence States
     const [dashIngredients, setDashIngredients] = useState([]);
     const [dashResults, setDashResults] = useState(RECIPES);
     const [dashAiIntro, setDashAiIntro] = useState("");
@@ -49,7 +48,6 @@ export default function App() {
     const [dashSelectedServings, setDashSelectedServings] = useState("");
     const [dashSelectedMealType, setDashSelectedMealType] = useState("");
 
-    // Fetch user profile on mount if token exists but no user state
     useEffect(() => {
         const fetchProfile = async () => {
             const token = localStorage.getItem("appitat_token");
@@ -70,6 +68,14 @@ export default function App() {
         fetchProfile();
     }, []);
 
+    // Wake up the Render server on first load (free tier spins down after inactivity)
+    useEffect(() => {
+        fetch('https://appitat.onrender.com')
+            .then(() => console.log("Server wake-up signal sent"))
+            .catch((err) => console.error("Wake-up failed", err));
+    }, []);
+
+
     const handleNavigate = (path, data) => {
         if (data) setCurrentRecipe(data);
         if (path === "hero" && user) {
@@ -81,9 +87,7 @@ export default function App() {
     };
 
     const login = async (u, token) => {
-        // Set the initial user from the login response
         setUser(u);
-        // Then immediately fetch the full profile from DB to get all fields
         if (token) {
             try {
                 const response = await userAPI.getProfile();
@@ -151,7 +155,6 @@ export default function App() {
 
         if (newlyUnlocked) {
             setAchievedBadge(newlyUnlocked);
-            // Auto dismiss after 6 seconds
             setTimeout(() => setAchievedBadge(null), 6000);
         }
     };
@@ -169,16 +172,12 @@ export default function App() {
             level: newLevel
         };
 
-        // Update local state immediately for responsive UI
         setUser(updatedUser);
         checkBadgeUnlocks(user, updatedUser);
 
-        // Sync to backend
         try {
-            // 1. Sync XP
             const res = await userAPI.addXp(amount);
             
-            // 2. Record Cook if metadata provided
             if (recipeMetadata) {
                 try {
                     const recordRes = await userAPI.recordCook({
@@ -219,11 +218,9 @@ export default function App() {
             cookDays: newCookDays
         };
         
-        // Update local state and check badges
         setUser(updatedLocal);
         checkBadgeUnlocks(user, updatedLocal);
 
-        // Persist to backend
         try {
             await userAPI.updateProfile({ cookDays: newCookDays });
         } catch (err) {
@@ -254,7 +251,6 @@ export default function App() {
                     : [],
                 theme,
                 toggleTheme,
-                // Dashboard States
                 ingredients: dashIngredients,
                 setIngredients: setDashIngredients,
                 results: dashResults,
@@ -277,7 +273,6 @@ export default function App() {
                 setSelectedMealType: setDashSelectedMealType,
             }}
         >
-            {/* Global Badge Unlock Notification Toaster */}
             {achievedBadge && (
                 <div
                     className="fixed bottom-6 right-6 z-[100] slide-up"
@@ -317,6 +312,7 @@ export default function App() {
             )}
 
             {showNav && <Navbar />}
+            {showNav && <MobileBottomNav />}
             <Suspense
                 fallback={
                     <div className="min-h-screen bg-brand-bg flex items-center justify-center">
