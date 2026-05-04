@@ -78,11 +78,30 @@ exports.getRecommendation = async (req, res) => {
             Recipe fields: title, emoji (a SINGLE emoji character only), description (2 full sentences), cuisine, ingredients (array of strings with quantities), steps (array of 8-10 detailed strings), time, calories (number), difficulty, servings (number), accent (hex), tags.
         `;
 
-        const result = await ollama.generate({
-            model: "gpt-oss:120b-cloud",
-            prompt: prompt,
-            format: "json",
-        });
+        // Retry logic for cloud-hosted Ollama model (transient failures are common)
+        let result;
+        const MAX_RETRIES = 3;
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                console.log(`[Ollama] Recipe generation attempt ${attempt}/${MAX_RETRIES}...`);
+                result = await ollama.generate({
+                    model: "gpt-oss:120b-cloud",
+                    prompt: prompt,
+                    format: "json",
+                });
+                break; // success, exit retry loop
+            } catch (ollamaErr) {
+                console.error(`[Ollama] Attempt ${attempt} failed: ${ollamaErr.message}`);
+                if (attempt === MAX_RETRIES) {
+                    return res.status(503).json({
+                        message: "AI service is temporarily unavailable. Please try again in a moment.",
+                        error: ollamaErr.message,
+                    });
+                }
+                // Wait before retrying
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+            }
+        }
 
         let rawText = result.response
             .replace(/```json|```/g, "")
