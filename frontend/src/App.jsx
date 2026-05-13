@@ -32,7 +32,10 @@ export default function App() {
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
 
-    const [currentRecipe, setCurrentRecipe] = useLocalStorage("appitat_current_recipe", null);
+    const [currentRecipe, setCurrentRecipe] = useLocalStorage(
+        "appitat_current_recipe",
+        null,
+    );
     const [user, setUser] = useLocalStorage("appitat_user", null);
     const [saved, setSaved] = useLocalStorage("appitat_saved", []);
     const [achievedBadge, setAchievedBadge] = useState(null);
@@ -70,11 +73,10 @@ export default function App() {
 
     // Wake up the Render server on first load (free tier spins down after inactivity)
     useEffect(() => {
-        fetch('https://appitat.onrender.com')
+        fetch("https://appitat-backend.onrender.com")
             .then(() => console.log("Server wake-up signal sent"))
             .catch((err) => console.error("Wake-up failed", err));
     }, []);
-
 
     const handleNavigate = (path, data) => {
         if (data) setCurrentRecipe(data);
@@ -125,12 +127,14 @@ export default function App() {
             const newList = p.find((x) => x.id === r.id)
                 ? p.filter((x) => x.id !== r.id)
                 : [...p, r];
-            
+
             // Sync to backend if logged in
             if (user) {
-                userAPI.syncSavedRecipes(newList).catch(err => 
-                    console.error("Failed to sync saved recipes:", err)
-                );
+                userAPI
+                    .syncSavedRecipes(newList)
+                    .catch((err) =>
+                        console.error("Failed to sync saved recipes:", err),
+                    );
             }
             return newList;
         });
@@ -161,7 +165,7 @@ export default function App() {
 
     const addXp = async (amount, recipeMetadata = null) => {
         if (!user) return;
-        
+
         const currentXp = user.xp || 0;
         const newXp = currentXp + amount;
         const newLevel = Math.floor(newXp / 500) + 1;
@@ -169,7 +173,7 @@ export default function App() {
         const updatedUser = {
             ...user,
             xp: newXp,
-            level: newLevel
+            level: newLevel,
         };
 
         setUser(updatedUser);
@@ -177,15 +181,18 @@ export default function App() {
 
         try {
             const res = await userAPI.addXp(amount);
-            
+
             if (recipeMetadata) {
                 try {
                     const recordRes = await userAPI.recordCook({
                         recipeId: recipeMetadata.id,
                         title: recipeMetadata.title,
-                        emoji: typeof recipeMetadata.emoji === 'string' ? recipeMetadata.emoji : "🍳",
+                        emoji:
+                            typeof recipeMetadata.emoji === "string"
+                                ? recipeMetadata.emoji
+                                : "🍳",
                         cuisine: recipeMetadata.cuisine,
-                        xpAwarded: amount
+                        xpAwarded: amount,
                     });
                     if (recordRes.data?.user) {
                         setUser(recordRes.data.user);
@@ -201,9 +208,14 @@ export default function App() {
                 setUser(res.data.user);
             }
         } catch (err) {
-            console.error("Failed to sync progress to backend:", err.response?.data || err.message);
+            console.error(
+                "Failed to sync progress to backend:",
+                err.response?.data || err.message,
+            );
             if (err.response?.status === 401) {
-                alert("Your session has expired. Please log in again to save your progress.");
+                alert(
+                    "Your session has expired. Please log in again to save your progress.",
+                );
                 logout();
             }
         }
@@ -211,13 +223,13 @@ export default function App() {
 
     const handleCookDay = async () => {
         if (!user) return;
-        
+
         const newCookDays = (user.cookDays || 0) + 1;
         const updatedLocal = {
             ...user,
-            cookDays: newCookDays
+            cookDays: newCookDays,
         };
-        
+
         setUser(updatedLocal);
         checkBadgeUnlocks(user, updatedLocal);
 
