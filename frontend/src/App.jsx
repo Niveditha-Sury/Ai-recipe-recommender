@@ -348,14 +348,14 @@ export default function App() {
                         path="/signup"
                         element={<AuthPage mode="signup" />}
                     />
-                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/dashboard" element={user ? <DashboardPage /> : <Navigate to="/login" replace />} />
                     <Route
                         path="/recipe"
-                        element={<RecipeDetailPage recipe={currentRecipe} />}
+                        element={user ? <RecipeDetailPage recipe={currentRecipe} /> : <Navigate to="/login" replace />}
                     />
-                    <Route path="/saved" element={<SavedPage />} />
-                    <Route path="/account" element={<AccountPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/saved" element={user ? <SavedPage /> : <Navigate to="/login" replace />} />
+                    <Route path="/account" element={user ? <AccountPage /> : <Navigate to="/login" replace />} />
+                    <Route path="/settings" element={user ? <SettingsPage /> : <Navigate to="/login" replace />} />
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </Suspense>

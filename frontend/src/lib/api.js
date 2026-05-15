@@ -23,6 +23,10 @@ api.interceptors.request.use(
 export const authAPI = {
     signup: (data) => api.post("/auth/signup", data),
     login: (data) => api.post("/auth/login", data),
+    googleLogin: (data) => api.post("/auth/google", data),
+    forgotPassword: (data) => api.post("/auth/forgot-password", data),
+    resetPassword: (data) => api.post("/auth/reset-password", data),
+    verifyEmail: (data) => api.post("/auth/verify-email", data),
 };
 
 export const aiAPI = {
