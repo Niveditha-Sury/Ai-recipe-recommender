@@ -96,6 +96,12 @@
 - Tabbed account page (Cookbook, Preferences & AI, Badges, History).
 - Settings page with unsaved changes detection and discard modal.
 
+### 🔐 Security & Authentication
+
+- **Google OAuth Integration** — Seamless one-tap login and registration using Google accounts.
+- **Email Verification** — Mandatory 6-digit OTP verification via Nodemailer for all manual signups to ensure account security.
+- **Secure Password Reset** — Forgot password flow with time-limited 6-digit recovery codes.
+
 ---
 
 ## 🛠️ Tech Stack
@@ -122,6 +128,8 @@
 | **Groq SDK**                 | Cloud AI recipe generation via SSE streaming     |
 | **Google Generative AI SDK** | Gemini API integration for vision features       |
 | **JSON Web Tokens (JWT)**    | Stateless authentication (7-day expiry)          |
+| **Google Auth Library**      | Secure Google sign-in integration                |
+| **Nodemailer**               | Email delivery for OTP and password resets       |
 | **bcryptjs**                 | Password hashing with salt rounds                |
 | **Multer**                   | Multipart file uploads (images)                  |
 | **CORS**                     | Cross-Origin Resource Sharing configuration      |
@@ -263,6 +271,13 @@ GROQ_API_KEY=your_groq_api_key
 # JWT Secret Key (use a strong random string)
 JWT_SECRET=your_super_secret_jwt_key
 
+# Google OAuth Client ID
+GOOGLE_CLIENT_ID=your_google_client_id
+
+# Email Service (Nodemailer)
+EMAIL_USER=your_email@gmail.com
+EMAIL_APP_PASSWORD=your_app_password
+
 # Frontend URL (for CORS — set to your deployed frontend URL in production)
 FRONTEND_URL=http://localhost:5173
 
@@ -305,10 +320,14 @@ All API endpoints are prefixed with `/api`. Protected routes require a `Bearer <
 
 ### Authentication Endpoints
 
-| Method | Endpoint           | Auth | Description                   |
-| ------ | ------------------ | ---- | ----------------------------- |
-| `POST` | `/api/auth/signup` | ❌   | Register a new user account   |
-| `POST` | `/api/auth/login`  | ❌   | Login and receive a JWT token |
+| Method | Endpoint                    | Auth | Description                            |
+| ------ | --------------------------- | ---- | -------------------------------------- |
+| `POST` | `/api/auth/signup`          | ❌   | Register a new user account            |
+| `POST` | `/api/auth/login`           | ❌   | Login and receive a JWT token          |
+| `POST` | `/api/auth/google`          | ❌   | Authenticate via Google OAuth token    |
+| `POST` | `/api/auth/verify-email`    | ❌   | Verify email using 6-digit OTP         |
+| `POST` | `/api/auth/forgot-password` | ❌   | Send password reset OTP                |
+| `POST` | `/api/auth/reset-password`  | ❌   | Reset password using OTP               |
 
 #### `POST /api/auth/signup`
 
@@ -517,23 +536,29 @@ Appitat uses a **hybrid AI architecture** combining **Groq** (`llama-3.3-70b-ver
 
 ```javascript
 {
-  name:           String (required),
-  email:          String (required, unique),
-  password:       String (required, hashed),
-  profilePic:     String,
-  coverPic:       String,
-  pantry:         [String],
-  allergies:      [String],
-  neverShowMe:    [String],
-  age:            Number,
-  experience:     String (enum: "beginner" | "intermediate" | "advanced" | "pro"),
-  xp:             Number (default: 0),
-  level:          Number (default: 1),
-  cookDays:       Number (default: 0),
-  recentlyViewed: [{ recipeId, viewedAt }],
-  history:        [{ recipeId, title, emoji, cuisine, xpAwarded, cookedAt }],
-  badges:         [{ name, emoji, unlockedAt }],
-  savedRecipes:   [Object]
+  name:                   String (required),
+  email:                  String (required, unique),
+  password:               String (hashed),
+  googleId:               String,
+  isVerified:             Boolean (default: false),
+  verificationCode:       String,
+  verificationCodeExpiry: Date,
+  resetCode:              String,
+  resetCodeExpiry:        Date,
+  profilePic:             String,
+  coverPic:               String,
+  pantry:                 [String],
+  allergies:              [String],
+  neverShowMe:            [String],
+  age:                    Number,
+  experience:             String (enum: "beginner" | "intermediate" | "advanced" | "pro"),
+  xp:                     Number (default: 0),
+  level:                  Number (default: 1),
+  cookDays:               Number (default: 0),
+  recentlyViewed:         [{ recipeId, viewedAt }],
+  history:                [{ recipeId, title, emoji, cuisine, xpAwarded, cookedAt }],
+  badges:                 [{ name, emoji, unlockedAt }],
+  savedRecipes:           [Object]
 }
 ```
 
