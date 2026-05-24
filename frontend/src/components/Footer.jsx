@@ -10,7 +10,7 @@ export default function Footer() {
     return (
         <>
             <footer className="bg-brand-card text-brand-primary/80 px-6 pt-12 pb-8 border-t border-brand-primary/10">
-                <div className="max-w-[1400px] mx-auto grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-10">
+                <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-6">
                     <div>
                         <div className="flex items-center gap-2 mb-3">
                             <span className="text-[20px] text-brand-secondary">
