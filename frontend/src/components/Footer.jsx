@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { FaUtensils } from "react-icons/fa6";
 import { FiMessageSquare } from "react-icons/fi";
 import FeedbackModal from "./FeedbackModal";
@@ -29,24 +30,18 @@ export default function Footer() {
                         [
                             "Discover",
                             [
-                                "Browse Recipes",
-                                "Trending Today",
-                                "Seasonal Picks",
-                                "Quick Meals",
+                                { label: "Browse Recipes", path: "/dashboard" }
                             ],
                         ],
                         [
                             "Account",
                             [
-                                "Sign Up Free",
-                                "Log In",
-                                "Saved Recipes",
-                                "Meal Planner",
+                                { label: "Sign Up Free", path: "/signup" },
+                                { label: "Log In", path: "/login" },
+                                { label: "Saved Recipes", path: "/saved" },
+                                { label: "My Profile", path: "/account" },
+                                { label: "Settings", path: "/settings" }
                             ],
-                        ],
-                        [
-                            "Company",
-                            ["About Us", "Blog", "Privacy Policy", "Contact"],
                         ],
                     ].map(([title, links]) => (
                         <div key={title}>
@@ -54,12 +49,13 @@ export default function Footer() {
                                 {title}
                             </p>
                             {links.map((l) => (
-                                <p
-                                    key={l}
-                                    className="text-[13px] mb-2 transition-colors duration-200"
+                                <Link
+                                    key={l.label}
+                                    to={l.path}
+                                    className="block text-[13px] mb-2 transition-colors duration-200 hover:text-brand-accent hover:underline"
                                 >
-                                    {l}
-                                </p>
+                                    {l.label}
+                                </Link>
                             ))}
                         </div>
                     ))}
@@ -83,7 +79,7 @@ export default function Footer() {
                     </div>
                 </div>
                 <div className="max-w-[1400px] mx-auto mt-8 border-t border-brand-primary/10 pt-6 text-center text-xs opacity-70">
-                    © 2026 Appitat · Powered by Gemini AI
+                    © {new Date().getFullYear()} Appitat · AI-Powered Culinary Intelligence.
                 </div>
             </footer>
 

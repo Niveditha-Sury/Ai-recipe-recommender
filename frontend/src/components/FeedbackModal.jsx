@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiSend, FiCheckCircle } from "react-icons/fi";
+import { FiSend, FiCheckCircle, FiMessageSquare } from "react-icons/fi";
 import { feedbackAPI } from "../lib/api";
 
 const CATEGORIES = [
@@ -67,43 +67,47 @@ export default function FeedbackModal({ onClose }) {
             className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <div className="bg-brand-bg rounded-card max-w-md w-full shadow-2xl border border-brand-primary/10 overflow-hidden scale-up">
-                {/* Header */}
+            <div className="bg-brand-bg rounded-card max-w-2xl w-full shadow-2xl border border-brand-primary/10 overflow-hidden scale-up relative">
+                {/* Close Button positioned absolutely on the card itself, not the header flexbox, to preserve AccountPage header exactness */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-5 right-5 z-10 text-brand-bg/60 hover:text-brand-bg transition-colors cursor-pointer p-1 rounded-lg hover:bg-brand-bg/10 text-xl leading-none"
+                    aria-label="Close feedback modal"
+                >
+                    &times;
+                </button>
+
+                {/* Header matching AccountPage exactly */}
                 <div
-                    className="relative px-6 py-5 border-b border-brand-primary/10"
+                    className="px-6 py-5 border-b border-brand-primary/10"
                     style={{
-                        background:
-                            "var(--brand-primary)",
+                        background: "var(--brand-primary)",
                     }}
                 >
-                    <h2 className="serif text-xl font-black text-brand-bg">
-                        Share Your Feedback
-                    </h2>
-                    <p className="text-brand-bg/70 text-sm mt-0.5">
-                        Help us make Appitat better for you
-                    </p>
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 text-brand-bg/60 hover:text-brand-bg transition-colors cursor-pointer p-1 rounded-lg hover:bg-brand-bg/10 text-xl leading-none"
-                        aria-label="Close feedback modal"
-                    >
-                        &times;
-                    </button>
+                    <div className="flex items-center gap-3 pr-8">
+                        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                            <FiMessageSquare className="text-brand-bg" size={17} />
+                        </div>
+                        <div>
+                            <h2 className="serif text-xl font-black text-brand-bg leading-tight">Share Your Feedback</h2>
+                            <p className="text-brand-bg/60 text-xs mt-0.5">Your suggestions directly shape Appitat</p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Content */}
                 <div className="px-6 py-6">
                     {done ? (
-                        <div className="flex flex-col items-center py-6 text-center gap-4 slide-up">
+                        <div className="flex flex-col items-center text-center gap-5 slide-up py-4">
                             <div className="w-14 h-14 rounded-full bg-brand-primary/10 flex items-center justify-center">
                                 <FiCheckCircle className="text-brand-primary" size={28} />
                             </div>
                             <div>
-                                <h3 className="serif text-xl font-black text-brand-primary mb-1">
+                                <h2 className="serif text-2xl font-black text-brand-primary mb-2">
                                     Thank you
-                                </h3>
-                                <p className="text-brand-primary/60 text-sm leading-relaxed">
-                                    Your feedback means a lot. We will use it to keep improving Appitat.
+                                </h2>
+                                <p className="text-brand-primary/60 text-sm leading-relaxed max-w-xs mx-auto">
+                                    Your feedback has been sent. We will use it to keep improving Appitat.
                                 </p>
                             </div>
                             <button
@@ -114,15 +118,31 @@ export default function FeedbackModal({ onClose }) {
                             </button>
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                             {/* Star Rating */}
                             <div>
-                                <label className="block text-sm font-bold text-brand-primary/80 mb-2">
+                                <label className="block text-sm font-bold text-brand-primary/80 mb-3">
                                     Overall Rating *
                                 </label>
-                                <StarRating value={rating} onChange={setRating} />
+                                <div className="flex gap-2">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setRating(star)}
+                                            className={`text-4xl transition-all duration-150 hover:scale-110 focus:outline-none cursor-pointer leading-none ${
+                                                star <= rating
+                                                    ? "text-brand-secondary"
+                                                    : "text-brand-primary/20 hover:text-brand-secondary/40"
+                                            }`}
+                                            aria-label={`${star} star${star !== 1 ? "s" : ""}`}
+                                        >
+                                            &#9733;
+                                        </button>
+                                    ))}
+                                </div>
                                 {rating > 0 && (
-                                    <p className="text-xs text-brand-secondary font-bold mt-1.5 uppercase tracking-wider slide-up">
+                                    <p className="text-xs text-brand-secondary font-bold mt-2 uppercase tracking-wider slide-up">
                                         {RATING_LABELS[rating]}
                                     </p>
                                 )}
@@ -130,7 +150,7 @@ export default function FeedbackModal({ onClose }) {
 
                             {/* Category Tags */}
                             <div>
-                                <label className="block text-sm font-bold text-brand-primary/80 mb-2">
+                                <label className="block text-sm font-bold text-brand-primary/80 mb-3">
                                     What is this about?{" "}
                                     <span className="font-normal text-brand-primary/40">(optional)</span>
                                 </label>
@@ -140,7 +160,7 @@ export default function FeedbackModal({ onClose }) {
                                             key={cat}
                                             type="button"
                                             onClick={() => toggleCategory(cat)}
-                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-150 cursor-pointer ${
+                                            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-150 cursor-pointer ${
                                                 categories.includes(cat)
                                                     ? "bg-brand-primary text-brand-bg shadow-sm"
                                                     : "bg-brand-primary/8 text-brand-primary/70 hover:bg-brand-primary/15 border border-brand-primary/15"
@@ -156,14 +176,14 @@ export default function FeedbackModal({ onClose }) {
                             <div>
                                 <label
                                     htmlFor="feedback-message"
-                                    className="block text-sm font-bold text-brand-primary/80 mb-2"
+                                    className="block text-sm font-bold text-brand-primary/80 mb-3"
                                 >
                                     Tell us more{" "}
                                     <span className="font-normal text-brand-primary/40">(optional)</span>
                                 </label>
                                 <textarea
                                     id="feedback-message"
-                                    rows={4}
+                                    rows={5}
                                     maxLength={1000}
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
@@ -184,16 +204,9 @@ export default function FeedbackModal({ onClose }) {
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="btn-primary w-full py-3.5 rounded-xl text-[15px] font-bold flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                                className="btn-primary w-full py-4 rounded-xl text-[15px] font-bold flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                             >
-                                {submitting ? (
-                                    "Sending..."
-                                ) : (
-                                    <>
-                                        <FiSend size={14} />
-                                        Submit Feedback
-                                    </>
-                                )}
+                                {submitting ? "Sending..." : (<><FiSend size={15} /> Submit Feedback</>)}
                             </button>
                         </form>
                     )}

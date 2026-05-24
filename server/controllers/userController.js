@@ -26,7 +26,7 @@ exports.updatePantry = async (req, res) => {
         const user = await User.findByIdAndUpdate(
             req.user.userId,
             { $set: { pantry: ingredients, allergies: allergies } },
-            { new: true, runValidators: true },
+            { returnDocument: "after", runValidators: true },
         ).select("-password");
 
         res.status(200).json({
@@ -74,7 +74,7 @@ exports.updateProfileImages = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { $set: updates },
-            { new: true },
+            { returnDocument: "after" },
         ).select("-password");
 
         res.status(200).json({
@@ -109,7 +109,7 @@ exports.updateProfile = async (req, res) => {
         const user = await User.findByIdAndUpdate(
             req.user.userId,
             { $set: updates },
-            { new: true, runValidators: true },
+            { returnDocument: "after", runValidators: true },
         ).select("-password");
 
         if (!user) return res.status(404).json({ message: "User not found" });
@@ -191,7 +191,7 @@ exports.syncSavedRecipes = async (req, res) => {
         const user = await User.findByIdAndUpdate(
             req.user.userId,
             { $set: { savedRecipes } },
-            { new: true, runValidators: true }
+            { returnDocument: "after", runValidators: true }
         ).select("-password");
 
         if (!user) return res.status(404).json({ message: "User not found" });
